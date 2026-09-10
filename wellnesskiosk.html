@@ -219,6 +219,8 @@
   .overlay-body {
     flex: 1;
     display: flex;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .overlay-body iframe {
@@ -231,7 +233,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: safe center;
     gap: 24px;
     padding: 40px;
     text-align: center;
@@ -267,6 +269,34 @@
     max-width: 420px;
     margin: 0;
     line-height: 1.5;
+  }
+
+  .qr-view p.qr-section-label {
+    font-size: 14px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--crimson);
+    max-width: 420px;
+    margin: 0;
+  }
+
+  .qr-columns {
+    display: flex;
+    gap: 48px;
+    justify-content: center;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  .qr-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    max-width: 340px;
+    text-align: center;
   }
 
   .followup-note {
@@ -312,7 +342,7 @@
     <p class="instruction">Tap a service below, then scan the QR code with your phone.<br>If you have already completed the check-in process, please go to the front desk.</p>
     <div class="tiles">
 
-      <div class="tile" data-kind="qr" data-checkin="true" data-url="https://echeckin.healow.com/webecheckin/echeckin/QRCheckin?v1=NXh2aWhIM05NWGI0THRVWVFCNTZRVXdraXRsZ05HZDhtaVpCTWRBdVI0YWpOWEJqbzd1Q0VpVEk1V1lYZUQ5aHNqS0wxSnZCZGVSWVFBR1JBSWVCbTJETlI1bjJYOEtiemVpZFRPQ0h4Q3R2clM0OGREaFhOR0NLTmlUalczMzQ" data-name="Intervention Services" onclick="openTile(this)">
+      <div class="tile" data-kind="qr" data-checkin="true" data-url="https://echeckin.healow.com/webecheckin/echeckin/QRCheckin?v1=NXh2aWhIM05NWGI0THRVWVFCNTZRVXdraXRsZ05HZDhtaVpCTWRBdVI0YWpOWEJqbzd1Q0VpVEk1V1lYZUQ5aHNqS0wxSnZCZGVSWVFBR1JBSWVCbTJETlI1bjJYOEtiemVpZFRPQ0h4Q3R2clM0OGREaFhOR0NLTmlUalczMzQ" data-name="Intervention Services" data-secondary-url="https://mycw65.ecwcloud.com/portal8462/jsp/100mp/login_otp.jsp" data-secondary-label="Backup: Patient Portal Check-In" data-secondary-scan-text="Scan this code with your phone camera to log into your Patient Portal and check in." onclick="openTile(this)">
         <div class="icon-badge"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><path fill="#fff" d="M16 25a5 5 0 0 1 5-5h20a5 5 0 0 1 5 5v10h13a5 5 0 0 1 5 5v12a5 5 0 0 1-5 5h-.586L54 61.414 49.586 57H39a5 5 0 0 1-5-5V42h-3.586L26 46.414 21.586 42H21a5 5 0 0 1-5-5V25Z"/><path d="M26 31a2 2 0 1 1-4 0 2 2 0 0 1 4 0Zm7 0a2 2 0 1 1-4 0 2 2 0 0 1 4 0Zm5 2a2 2 0 1 0 0-4 2 2 0 0 0 0 4Zm18 15a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm-9-2a2 2 0 1 0 4 0 2 2 0 0 0-4 0Zm-5 2a2 2 0 1 1 0-4 2 2 0 0 1 0 4Z"/><path d="M16 25a5 5 0 0 1 5-5h20a5 5 0 0 1 5 5v10h13a5 5 0 0 1 5 5v12a5 5 0 0 1-5 5h-.586L54 61.414 49.586 57H39a5 5 0 0 1-5-5V42h-3.586L26 46.414 21.586 42H21a5 5 0 0 1-5-5V25Zm18 15a5 5 0 0 1 5-5h5V25a3 3 0 0 0-3-3H21a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3h1.414L26 43.586 29.586 40H34Zm5-3a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3h11.414L54 58.586 57.586 55H59a3 3 0 0 0 3-3V40a3 3 0 0 0-3-3H39Z"/></svg></div>
         <p class="tile-name">Intervention Services</p>
         <p class="tile-desc">Scan QR code to check in for your appointment.</p>
@@ -2694,27 +2724,87 @@ var qrcode = function() {
         wrap.appendChild(hours);
       }
 
-      const qr = qrcode(0, 'M');
-      qr.addData(url);
-      qr.make();
-      const qrBox = document.createElement('div');
-      qrBox.className = 'qr-code-wrap';
-      qrBox.innerHTML = qr.createSvgTag({ scalable: true });
-      qrBox.setAttribute('role', 'img');
-      qrBox.setAttribute('aria-label', 'QR code for ' + name);
-      const p = document.createElement('p');
-      p.textContent = tile.dataset.scanText ||
-        ('Scan this code with your phone camera to complete your ' + name.toLowerCase() + ' check-in.');
-      wrap.appendChild(qrBox);
-      wrap.appendChild(p);
+      if (tile.dataset.secondaryUrl) {
+        // Side-by-side layout: preferred method on the left, backup on the right.
+        const columns = document.createElement('div');
+        columns.className = 'qr-columns';
 
-      if (tile.dataset.checkin === 'true') {
-        const note = document.createElement('div');
-        note.className = 'followup-note';
-        note.innerHTML =
-          '<p><strong>Having trouble scanning?</strong> Please see the front desk for help.</p>' +
-          '<p><strong>When done,</strong> please let the front desk know you have arrived and completed check-in.</p>';
-        wrap.appendChild(note);
+        const col1 = document.createElement('div');
+        col1.className = 'qr-column';
+        const label1 = document.createElement('p');
+        label1.className = 'qr-section-label';
+        label1.textContent = 'Preferred Check-In Method';
+        const qr = qrcode(0, 'M');
+        qr.addData(url);
+        qr.make();
+        const qrBox = document.createElement('div');
+        qrBox.className = 'qr-code-wrap';
+        qrBox.innerHTML = qr.createSvgTag({ scalable: true });
+        qrBox.setAttribute('role', 'img');
+        qrBox.setAttribute('aria-label', 'QR code for ' + name);
+        const p = document.createElement('p');
+        p.textContent = tile.dataset.scanText ||
+          ('Scan this code with your phone camera to complete your ' + name.toLowerCase() + ' check-in.');
+        col1.appendChild(label1);
+        col1.appendChild(qrBox);
+        col1.appendChild(p);
+
+        const col2 = document.createElement('div');
+        col2.className = 'qr-column';
+        const label2 = document.createElement('p');
+        label2.className = 'qr-section-label';
+        label2.textContent = tile.dataset.secondaryLabel || 'Backup Check-In Method';
+        col2.appendChild(label2);
+        const secQr = qrcode(0, 'M');
+        secQr.addData(tile.dataset.secondaryUrl);
+        secQr.make();
+        const secQrBox = document.createElement('div');
+        secQrBox.className = 'qr-code-wrap';
+        secQrBox.innerHTML = secQr.createSvgTag({ scalable: true });
+        secQrBox.setAttribute('role', 'img');
+        secQrBox.setAttribute('aria-label', 'Backup QR code for ' + name);
+        col2.appendChild(secQrBox);
+        const secP = document.createElement('p');
+        secP.textContent = tile.dataset.secondaryScanText ||
+          ('Scan this code with your phone camera to complete your ' + name.toLowerCase() + ' check-in.');
+        col2.appendChild(secP);
+
+        columns.appendChild(col1);
+        columns.appendChild(col2);
+        wrap.appendChild(columns);
+
+        if (tile.dataset.checkin === 'true') {
+          const note = document.createElement('div');
+          note.className = 'followup-note';
+          note.innerHTML =
+            '<p><strong>Having trouble scanning?</strong> Please see the front desk for help.</p>' +
+            '<p><strong>When done,</strong> please let the front desk know you have arrived and completed check-in.</p>';
+          wrap.appendChild(note);
+        }
+      } else {
+        // Single QR code, centered.
+        const qr = qrcode(0, 'M');
+        qr.addData(url);
+        qr.make();
+        const qrBox = document.createElement('div');
+        qrBox.className = 'qr-code-wrap';
+        qrBox.innerHTML = qr.createSvgTag({ scalable: true });
+        qrBox.setAttribute('role', 'img');
+        qrBox.setAttribute('aria-label', 'QR code for ' + name);
+        const p = document.createElement('p');
+        p.textContent = tile.dataset.scanText ||
+          ('Scan this code with your phone camera to complete your ' + name.toLowerCase() + ' check-in.');
+        wrap.appendChild(qrBox);
+        wrap.appendChild(p);
+
+        if (tile.dataset.checkin === 'true') {
+          const note = document.createElement('div');
+          note.className = 'followup-note';
+          note.innerHTML =
+            '<p><strong>Having trouble scanning?</strong> Please see the front desk for help.</p>' +
+            '<p><strong>When done,</strong> please let the front desk know you have arrived and completed check-in.</p>';
+          wrap.appendChild(note);
+        }
       }
 
       body.appendChild(wrap);
